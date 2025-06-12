@@ -36,6 +36,12 @@ setTimeout(() => {
         timestamp: new Date().toISOString()
     };
     console.log("[YouTube Tracker] videoData:", videoData);
+    
+    // Send metadata to background script
+    chrome.runtime.sendMessage({
+        type: 'METADATA',
+        data: videoData
+    });
 }, 1000);
 
 // Time tracking - Task 9
@@ -53,11 +59,10 @@ window.addEventListener('beforeunload', () => {
         timestamp: new Date().toISOString()
     };
     
-    // Store in chrome storage
-    chrome.storage.local.get(['youtubeTimeData'], (result) => {
-        const existingData = result.youtubeTimeData || [];
-        existingData.push(timeData);
-        chrome.storage.local.set({ youtubeTimeData: existingData });
+    // Send time data to background script
+    chrome.runtime.sendMessage({
+        type: 'TIME_DATA',
+        data: timeData
     });
     
     console.log(`[YouTube Tracker] Time spent: ${timeSpent} seconds`);
