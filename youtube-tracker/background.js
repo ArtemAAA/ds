@@ -39,8 +39,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Background script received message:', message);
     console.log('Message from tab:', sender.tab ? sender.tab.url : 'unknown');
     
-    // Acknowledge receipt of message
-    sendResponse({ status: 'received' });
-    
+    // Send data to API when we receive METADATA or TIME_DATA
+    if (message.type === 'METADATA' || message.type === 'TIME_DATA') {
+        console.log('About to send to API...');
+        
+        sendToAPI(message.data)
+            .then(result => {
+                console.log('API call result:', result);
+                sendResponse({ status: 'sent', result: result });
+            })
+            .catch(error => {
+                console.error('API call error:', error);
+                sendResponse({ status: 'error', error: error.message });
+            });
+        
+        return true; // Keep message channel open for async response
+    } else {
+        // For other message types, just acknowledge
+        sendResponse({ status: 'received' });
+    }
+
     return true; // Keep message channel open for async response
 });

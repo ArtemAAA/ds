@@ -33,7 +33,9 @@ setTimeout(() => {
         channel: channel?.textContent?.trim() || "Channel not found",
         description: shortDescription,
         url: window.location.href,
-        timestamp: new Date().toISOString()
+        start_time: new Date().toISOString(),  // ← Changed from 'timestamp'
+        end_time: null,                        // ← Added required field  
+        total_seconds: 0                       // ← Added required field
     };
     console.log("[YouTube Tracker] videoData:", videoData);
     
@@ -54,9 +56,12 @@ window.addEventListener('beforeunload', () => {
     
     const timeData = {
         url: window.location.href,
-        timeSpent: timeSpent,
-        date: new Date().toISOString().split('T')[0],
-        timestamp: new Date().toISOString()
+        title: "Video watched",           // ← Add required fields
+        channel: "Unknown",               // ← Add required fields  
+        description: "",                  // ← Add required fields
+        start_time: new Date(startTime).toISOString(), // ← Changed from timestamp
+        end_time: new Date().toISOString(),            // ← Add end time
+        total_seconds: timeSpent          // ← Changed from timeSpent
     };
     
     // Send time data to background script
