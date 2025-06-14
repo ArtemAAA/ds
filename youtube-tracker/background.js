@@ -35,26 +35,24 @@ async function sendToAPI(data) {
 }
 
 // Listen for messages from content script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     console.log('Background script received message:', message);
     console.log('Message from tab:', sender.tab ? sender.tab.url : 'unknown');
     
     // Send data to API when we receive METADATA or TIME_DATA
     if (message.type === 'METADATA' || message.type === 'TIME_DATA') {
         console.log('About to send to API...');
-        
-        sendToAPI(message.data)
-            .then(result => {
-                console.log('API call result:', result);
-                sendResponse({ status: 'sent', result: result });
-            })
-            .catch(error => {
-                console.error('API call error:', error);
-                sendResponse({ status: 'error', error: error.message });
-            });
-        
+        try {
+            const result = await sendToAPI(message.data);
+            console.log('API call result:', result);
+            sendResponse({ status: 'sent', result: result });
+        } catch (error) {
+            console.error('Error sending data to API:', error);
+            sendResponse({ status: 'error', error: error.message });
+        }
         return true; // Keep message channel open for async response
     } else {
+        console.log('Received message of unknown type:', message.type, { message });
         // For other message types, just acknowledge
         sendResponse({ status: 'received' });
     }
