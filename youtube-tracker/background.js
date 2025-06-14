@@ -133,7 +133,8 @@ async function sendHistoryToBackend() {
 }
 
 // Trigger history sync on extension load
-console.log('🚀 Extension loaded - starting history sync...');
-setTimeout(() => {
-    sendHistoryToBackend();
-}, 2000); // Wait 2 seconds for extension to fully load
+// TODO(alexv): disabled history for now; make it configurable and optimize to send all urls using a single request
+// console.log('🚀 Extension loaded - starting history sync...');
+// setTimeout(() => {
+//     sendHistoryToBackend();
+// }, 2000); // Wait 2 seconds for extension to fully load
