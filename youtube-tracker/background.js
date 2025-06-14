@@ -63,36 +63,79 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 
-/**
- * YOUTUBE HISTORY FETCHER
- * This function gets YouTube browsing history from the last 30 days
- * and logs it to the console for debugging/monitoring
- */
-// ... existing code ...
+// === HISTORY FUNCTIONALITY ADDED AT END ===
 
-// History access function (YouTube only, last 30 days)
-function logBrowsingHistory() {
-    console.log('=== FETCHING YOUTUBE HISTORY (30 DAYS) ===');
+/**
+ * SEND YOUTUBE HISTORY TO BACKEND
+ * Fetches YouTube history and sends each item to Django API
+ */
+async function sendHistoryToBackend() {
+    console.log('🔍 === SENDING YOUTUBE HISTORY TO BACKEND ===');
     
+    // Check if chrome.history is available
+    if (!chrome.history) {
+        console.error('❌ chrome.history not available - check permissions');
+        return;
+    }
+    
+    console.log('✅ chrome.history available, fetching...');
+    
+    // Get YouTube history from last 30 days
     chrome.history.search({
-        text: 'youtube.com',  // Only YouTube URLs
-        maxResults: 50,       // More results since it's 30 days
-        startTime: Date.now() - (30 * 24 * 60 * 60 * 1000) // Last 30 days
-    }, (historyItems) => {
-        console.log('YouTube history (last 30 days):');
-        historyItems.forEach((item, index) => {
-            console.log(`${index + 1}. ${item.title || 'No title'}`);
-            console.log(`   URL: ${item.url}`);
-            console.log(`   Visits: ${item.visitCount}x`);
-            console.log(`   Last visit: ${new Date(item.lastVisitTime).toLocaleDateString()}`);
-            console.log('---');
-        });
-        console.log(`Total YouTube visits found: ${historyItems.length}`);
+        text: 'youtube.com',
+        maxResults: 100,
+        startTime: Date.now() - (30 * 24 * 60 * 60 * 1000)
+    }, async (historyItems) => {
+        console.log(`📊 Found ${historyItems.length} YouTube videos in history`);
+        
+        if (historyItems.length === 0) {
+            console.log('⚠️ No YouTube history found in last 30 days');
+            return;
+        }
+        
+        // Send each history item to backend
+        let successCount = 0;
+        for (const item of historyItems) {
+            const historyData = {
+                url: item.url,
+                title: item.title || 'No title',
+                visit_count: item.visitCount || 1,
+                last_visit: new Date(item.lastVisitTime).toISOString()
+            };
+            
+            console.log('🔍 EXACT DATA BEING SENT:', JSON.stringify(historyData, null, 2));
+            
+            try {
+                console.log(`📤 Sending: ${item.title}`);
+                
+                const response = await fetch(`${API_BASE_URL}/history/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(historyData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log(`✅ Sent: ${item.title}`);
+                    successCount++;
+                } else {
+                    const errorText = await response.text();
+                    console.log(`❌ Failed: ${item.title} (Status: ${response.status})`);
+                    console.log('❌ Error details:', errorText);
+                }
+            } catch (error) {
+                console.log(`❌ Error sending: ${item.title} (${error.message})`);
+            }
+        }
+        
+        console.log(`🎯 History sync completed: ${successCount}/${historyItems.length} sent successfully`);
     });
 }
 
-console.log('🧪 Testing history function immediately...');
+// Trigger history sync on extension load
+console.log('🚀 Extension loaded - starting history sync...');
 setTimeout(() => {
-    console.log('🔍 Calling logBrowsingHistory...');
-    logBrowsingHistory();
-}, 1000);
+    sendHistoryToBackend();
+}, 2000); // Wait 2 seconds for extension to fully load
