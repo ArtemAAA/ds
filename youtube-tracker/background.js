@@ -61,3 +61,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true; // Keep message channel open for async response
 });
+
+
+/**
+ * YOUTUBE HISTORY FETCHER
+ * This function gets YouTube browsing history from the last 30 days
+ * and logs it to the console for debugging/monitoring
+ */
+// ... existing code ...
+
+// History access function (YouTube only, last 30 days)
+function logBrowsingHistory() {
+    console.log('=== FETCHING YOUTUBE HISTORY (30 DAYS) ===');
+    
+    chrome.history.search({
+        text: 'youtube.com',  // Only YouTube URLs
+        maxResults: 50,       // More results since it's 30 days
+        startTime: Date.now() - (30 * 24 * 60 * 60 * 1000) // Last 30 days
+    }, (historyItems) => {
+        console.log('YouTube history (last 30 days):');
+        historyItems.forEach((item, index) => {
+            console.log(`${index + 1}. ${item.title || 'No title'}`);
+            console.log(`   URL: ${item.url}`);
+            console.log(`   Visits: ${item.visitCount}x`);
+            console.log(`   Last visit: ${new Date(item.lastVisitTime).toLocaleDateString()}`);
+            console.log('---');
+        });
+        console.log(`Total YouTube visits found: ${historyItems.length}`);
+    });
+}
+
+console.log('🧪 Testing history function immediately...');
+setTimeout(() => {
+    console.log('🔍 Calling logBrowsingHistory...');
+    logBrowsingHistory();
+}, 1000);
